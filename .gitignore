@@ -40,6 +40,9 @@ Release/
 *.exe
 lab/
 
+# Data files
+*.bmp
+
 
 # =========================
 # Operating System Files
