@@ -81,7 +81,7 @@ int64_t model_t::find_nearest_point_before(const int64_t id) const
     double cur_best_sqr_dist = 2.0; // assume we are working in [0,1]x[0,1]
     int64_t cur_best_id = -1;
 
-    for (dir = -1; dir<2; dir+=2) // dir = -1 and 1
+    for (dir = -1; dir<2; dir+=2) // dir = -1 (left) and 1 (right)
     {
         // go left or right, searching for closest point, until y coord dist is such that it can't be the closest point given the current best
         int64_t displacement = 0;
@@ -121,27 +121,14 @@ model_t::model_t (const int64_t n, const int c, const int64_t s)
     // RNG
     sampler_t sample(seed);
 
-    // populate the x vector, then sort
+    // populate the x vector
     int64_t i;
     for(i=0; i<n_point; ++i)
         x_coords.push_back(sample.unif_real_01());
-    sort(x_coords.begin(), x_coords.end());
-
-    // construct uniform random permutation of {0,..,n_point}, using a Knuth shuffle
-    vector<int64_t> perm;
-    perm.resize(n_point);
-    for (i=0; i<n_point; ++i) perm[i] = i;
-    for (i=0; i<n_point-1; ++i)
-    {
-        int64_t j = i + (double)(n-i)*sample.unif_real_01();
-        int64_t temp = perm[j];
-        perm[j] = perm[i];
-        perm[i] = temp;
-    }
 
     // populate the y vector, with each point associated to next point from x vector, and order given by perm, then sort
     for (i=0; i<n_point; ++i)
-        y_coords.emplace_back(sample.unif_real_01(), &x_coords[i], -1, perm[i]);
+        y_coords.emplace_back(sample.unif_real_01(), &x_coords[i], -1, i);
     sort(y_coords.begin(), y_coords.end());
 
     // map out which order the points, indexed by y.order, were added in
@@ -154,10 +141,12 @@ model_t::model_t (const int64_t n, const int c, const int64_t s)
     cout << "Generated " << n_point << " points." << endl;
 
     // colour the points
-    for (i=0; i<n_colour; ++i) {
-        y_coords[y_coord_order[i]].colour = i;
+    const int n_init = 5; // number of points of each colour to start with
+    if (n_init*n_colour>n_point) throw runtime_error{"not enough points to initialize"};
+    for (i=0; i<n_init*n_colour; ++i) {
+        y_coords[y_coord_order[i]].colour = i % n_colour;
     }
-    for (i=n_colour; i<n_point; ++i)
+    for (i=n_init*n_colour; i<n_point; ++i)
     {
        int64_t id = y_coord_order[i];
        int64_t nearest_id = find_nearest_point_before(id);
