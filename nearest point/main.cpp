@@ -76,7 +76,7 @@ int64_t model_t::find_nearest_point_before(const int64_t id) const
     double x = *(point.x);
     int64_t order = point.order;
 
-    // cycle over already existing points
+    // cycle over points
     int dir;
     double cur_best_sqr_dist = 2.0; // assume we are working in [0,1]x[0,1]
     int64_t cur_best_id = -1;
@@ -97,11 +97,11 @@ int64_t model_t::find_nearest_point_before(const int64_t id) const
 
             double cy = y_coords[candidate_id].y;
             double sqr_y_dist = (y-cy)*(y-cy);
-            if (sqr_y_dist>cur_best_sqr_dist) break; // all further points in this dir will have more y disp -> can't beat best
+            if (sqr_y_dist>cur_best_sqr_dist) break; // y coords alone means this can't beat the best -> can't beat best by going further in this dir
 
             double cx = *(y_coords[candidate_id].x);
             double sqr_x_dist = (x-cx)*(x-cx);
-            if (sqr_x_dist>=cur_best_sqr_dist) continue;
+            if (sqr_x_dist>=cur_best_sqr_dist) continue; // x coords alone means this can't be beat the best
 
             double sqr_dist = sqr_y_dist + sqr_x_dist;
             if (sqr_dist<cur_best_sqr_dist) {
@@ -181,8 +181,8 @@ vector<unsigned char> RGB_colour (const int colour_id)
 {
     // there is no better method of colouring than a hard coded list
     vector<string> colours = {
-"FF0000","00FF00","01FFFE","FFA6FE","0000FF","010067","95003A","007DB5",
-"FF00F6","FFEEE8","774D00","90FB92","0076FF","D5FF00","FF937E","6A826C",
+"FF0000","00FF00","0076FF","FFA6FE","0000FF","010067","95003A","007DB5",
+"FF00F6","FFEEE8","774D00","90FB92","01FFFE","D5FF00","FF937E","6A826C",
 "FF029D","FE8900","7A4782","7E2DD2","85A900","FF0056","A42400","00AE7E",
 "683D3B","BDC6FF","263400","BDD393","00B917","9E008E","001544","C28C9F",
 "FF74A3","01D0FF","004754","E56FFE","788231","0E4CA1","91D0CB","BE9970",
@@ -209,15 +209,15 @@ vector<unsigned char> RGB_colour (const int colour_id)
 int main()
 {
     // model
-    const int n_colour = 61; // 61 max
-    const int64_t n_particle = 5e6; // 1e7 particles uses 800mb mem
-    const int64_t seed = 1001; // random seed
+    const int n_colour = 3; // 61 max
+    const int64_t n_particle = 1e7; // 1e7 particles uses 800mb mem
+    const int64_t seed = 1008; // random seed
 
     model_t model(n_particle, n_colour, seed);
     vector<point_t> points = model.ordered_points();
 
     // init image
-    const int res = 1200; // image is (res)x(res)
+    const int res = 3000; // image is (res)x(res)
     bitmap_image image(res,res);
     image.set_all_channels(0,0,0); // black background
 
