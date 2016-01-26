@@ -23,8 +23,8 @@ public:
 
 class matched_y_coord {
 public:
-    double* x;
     double y;
+    double* x;
     int64_t order; // position in the order in which the points fell
     int colour;
     matched_y_coord (double py, double* px_ptr, int col, int64_t ord) : y(py), x(px_ptr), colour(col), order(ord) {};
@@ -141,7 +141,7 @@ model_t::model_t (const int64_t n, const int c, const int64_t s)
     cout << "Generated " << n_point << " points." << endl;
 
     // colour the points
-    const int n_init = 5; // number of points of each colour to start with
+    const int n_init = 1; // number of points of each colour to start with
     if (n_init*n_colour>n_point) throw runtime_error{"not enough points to initialize"};
     for (i=0; i<n_init*n_colour; ++i) {
         y_coords[y_coord_order[i]].colour = i % n_colour;
@@ -179,52 +179,29 @@ vector<point_t> model_t::ordered_points ()
 
 vector<unsigned char> RGB_colour (const int colour_id)
 {
+    // there is no better method of colouring than a hard coded list
+    vector<string> colours = {
+"FF0000","00FF00","01FFFE","FFA6FE","0000FF","010067","95003A","007DB5",
+"FF00F6","FFEEE8","774D00","90FB92","0076FF","D5FF00","FF937E","6A826C",
+"FF029D","FE8900","7A4782","7E2DD2","85A900","FF0056","A42400","00AE7E",
+"683D3B","BDC6FF","263400","BDD393","00B917","9E008E","001544","C28C9F",
+"FF74A3","01D0FF","004754","E56FFE","788231","0E4CA1","91D0CB","BE9970",
+"968AE8","BB8800","43002C","DEFF74","00FFC6","FFE502","620E00","008F9C",
+"98FF52","7544B1","B500FF","00FF78","FF6E41","005F39","6B6882","5FAD4E",
+"A75740","A5FFD2","FFB167","009BFF","E85EBE"
+    };
+    if (colour_id<0 || colour_id>=colours.size()) throw runtime_error{"invalid colour id"};
+
+    int num = stoi(colours[colour_id], 0, 16); // hex
+    int r = num / 0x10000; // 0..255
+    int g = (num / 0x100) % 0x100;
+    int b = num % 0x100;
+
     vector<unsigned char> colour;
     colour.resize(3);
-    unsigned char red,green,blue;
-    switch (colour_id) {
-        case 0:
-            red=255; green=0; blue=0;
-            break;
-        case 1:
-            red=0; green=255; blue=255;
-            break;
-        case 2:
-            red=255; green=255; blue=0;
-            break;
-        case 3:
-            red=255; green=0; blue=255;
-            break;
-        case 4:
-            red=0; green=255; blue=0;
-            break;
-        case 5:
-            red=255; green=128; blue=0;
-            break;
-        case 6:
-            red=0; green=128; blue=255;
-            break;
-        case 7:
-            red=255; green=153; blue=255;
-            break;
-        case 8:
-            red=0; green=153; blue=76;
-            break;
-        case 9:
-            red=0; green=0; blue=153;
-            break;
-        case 10:
-            red=102; green=0; blue=204;
-            break;
-        case 11:
-            red=153; green=153; blue=0;
-            break;
-        default:
-            throw runtime_error{"invalid colour"};
-    }
-    colour[1] = red;
-    colour[2] = green;
-    colour[3] = blue;
+    colour[0] = r;
+    colour[1] = g;
+    colour[2] = b;
     return colour;
 }
 
@@ -232,9 +209,10 @@ vector<unsigned char> RGB_colour (const int colour_id)
 int main()
 {
     // model
-    const int n_colour = 12; // 12 max
+    const int n_colour = 61; // 61 max
     const int64_t n_particle = 5e6; // 1e7 particles uses 800mb mem
-    const int64_t seed = 998;
+    const int64_t seed = 1001; // random seed
+
     model_t model(n_particle, n_colour, seed);
     vector<point_t> points = model.ordered_points();
 
@@ -261,17 +239,17 @@ int main()
         unsigned char r,g,b;
         image.get_pixel(x,y,r,g,b);
         if (r==0 && g==0 && b==0) {
-            image.set_pixel(x,y,colour[1],colour[2],colour[3]); // was black, now coloured
+            image.set_pixel(x,y,colour[0],colour[1],colour[2]); // was black, now coloured
         }
         else{
-            if (r!=colour[1] || g!=colour[2] || b!=colour[3]) {
+            if (r!=colour[0] || g!=colour[1] || b!=colour[2]) {
                 image.set_pixel(x,y,255,255,255); // if we have points of multiple colours in this pixel, set it to be white
                 ++n_colour_collison;
             }
             ++n_collision;
         }
 
-        // save images as we go
+        // save images as we go, when i+1==(3^K)*n_colour
         if (i+1==3*prev_sample || i+1==n_colour)
         {
             string filename = to_string(i+1) + ".bmp";
