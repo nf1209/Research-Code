@@ -1,4 +1,4 @@
-Research code to accompany various projects.
+Research code to accompany various projects. Copyright Nic Freeman.
 
 All C++ code is written in C++11 or more recent, and tested against gcc. 
 
